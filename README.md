@@ -1,13 +1,8 @@
-[![Build Status](https://travis-ci.org/AschPlatform/asch-cli.png?branch=master)](https://travis-ci.org/AschPlatform/asch-cli)
-[![Author](https://img.shields.io/badge/author-@AschPlatform-blue.svg?style=flat)](http://github.com/AschPlatform)
-[![License](https://img.shields.io/badge/license-MIT-yellow.svg?style=flat)](http://AschPlatform.mit-license.org)
-[![NpmDownload Status](http://img.shields.io/npm/dm/asch-cli.svg)](https://www.npmjs.org/package/asch-cli)
-[![NPM Version](https://img.shields.io/npm/v/asch-cli.svg?style=flat)](https://www.npmjs.org/package/asch-cli)
 - - -
 
-# Asch Client
+# etm Client
 
-A command line interface for bootstrapping and managing [Asch](https://github.com/AschPlatform) blockchain apps.
+A command line interface for bootstrapping and managing [etm](https://github.com/entanmo/) blockchain apps.
 
 ## Installation
 
@@ -15,10 +10,10 @@ A command line interface for bootstrapping and managing [Asch](https://github.co
 最新的dapps系列子命令要求node版本号为v8.4.0以上
 
 ```
-npm install -g asch-cli
+npm install -g etm-cli
 ```
 
-如在某些Linux发行版运行 asch-cli 报类似错“/usr/bin/env: ‘node’: No such file or directory”，即node版本过低或缺少node，可先执行：
+如在某些Linux发行版运行 etm-cli 报类似错“/usr/bin/env: ‘node’: No such file or directory”，即node版本过低或缺少node，可先执行：
 
 ```
 npm install -g n
@@ -28,9 +23,9 @@ n stable
 ## Usage
 
 ```
-./bin/asch-cli --help
+./bin/etm-cli --help
 
-  Usage: asch-cli [options] [command]
+  Usage: etm-cli [options] [command]
 
 
   Commands:
@@ -77,8 +72,4 @@ n stable
     -M, --main         Specify the mainnet, default: false
 ```
 
-## Detailed asch-cli Documentation
 
-* [Chinese](https://github.com/AschPlatform/asch/blob/master/docs/asch_cli_usage.md)
-* [English](https://github.com/AschPlatform/asch/blob/master/docs/asch_cli_usage_en.md)
-* [German](https://github.com/AschPlatform/asch/blob/master/docs/asch_cli_usage_de.md)
