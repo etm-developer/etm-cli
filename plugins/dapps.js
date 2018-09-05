@@ -3,6 +3,7 @@ var inquirer = require("inquirer");
 var gift = require("gift");
 var fs = require("fs");
 var async = require('async');
+var shell = require("shelljs");
 var path = require("path");
 var rmdir = require("rmdir");
 var request = require("request");
