@@ -234,6 +234,8 @@ async function createDAppMetaFile() {
 }
 
 async function addDapp() {
+	console.log('Copying template to the current directory ...')
+	shell.cp('-R', templatePath + '/*', '.')
 	await createDAppMetaFile()
 }
 
