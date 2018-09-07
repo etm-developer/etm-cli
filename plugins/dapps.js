@@ -1,4 +1,3 @@
-
 var inquirer = require("inquirer");
 var gift = require("gift");
 var fs = require("fs");
@@ -14,6 +13,7 @@ var accountHelper = require("../helpers/account.js");
 var blockHelper = require("../helpers/block.js");
 var dappHelper = require("../helpers/dapp.js");
 var Api = require("../helpers/api.js");
+var cryptoLib = require("../lib/crypto.js");
 
 var templatePath = path.join(__dirname, "..", "template");
 
@@ -75,8 +75,7 @@ async function prompt(question) {
 }
 
 async function createDAppMetaFile() {
-	let answer = await prompt([
-		{
+	let answer = await prompt([{
 			type: "input",
 			name: "name",
 			message: "Enter DApp name",
@@ -178,28 +177,12 @@ async function createDAppMetaFile() {
 		{
 			type: "input",
 			name: "delegates",
-			message: "Enter public keys of dapp delegates - hex array, use ',' for separator",
+			message: "Enter number of dapp delegates (mininum 5))",
 			validate: function (value) {
 				var done = this.async();
-
-				var publicKeys = value.split(",");
-
-				if (publicKeys.length == 0) {
-					done("DApp requires at least 1 delegate public key");
-					return;
-				}
-
-				for (var i in publicKeys) {
-					try {
-						var b = new Buffer(publicKeys[i], "hex");
-						if (b.length != 32) {
-							done("Invalid public key: " + publicKeys[i]);
-							return;
-						}
-					} catch (e) {
-						done("Invalid hex for public key: " + publicKeys[i]);
-						return;
-					}
+				var n = Number(value);
+				if (!Number.isInteger(n) || n < 5 || n > 101) {
+					return done("Invalid number of delegates");
 				}
 				done(null, true);
 			}
@@ -218,6 +201,22 @@ async function createDAppMetaFile() {
 			}
 		}
 	])
+
+	// var accounts = []
+	var secrets = []
+	var delegates = []
+	for (var i = 0; i < Number(answer.delegates); i++) {
+		var account = cryptoLib.generateAddress()
+		secrets.push(account.secret)
+		delegates.push(account.publicKey)
+	}
+	var configMetaInfo = {
+		peers: [],
+		secrets: secrets
+	}
+	var configMetaJson = JSON.stringify(configMetaInfo, null, 2);
+	fs.writeFileSync("./config.json", configMetaJson, "utf8");
+	console.log("DApp config secrets is saved to ./config.json ...");
 	var dappMetaInfo = {
 		name: answer.name,
 		link: answer.link,
@@ -225,7 +224,7 @@ async function createDAppMetaFile() {
 		description: answer.description || "",
 		tags: answer.tags || "",
 		icon: answer.icon || "",
-		delegates: answer.delegates.split(","),
+		delegates: delegates,
 		unlockDelegates: Number(answer.unlockDelegates),
 		type: 0
 	}
@@ -242,12 +241,11 @@ async function addDapp() {
 }
 
 async function depositDapp() {
-	let result = await inquirer.prompt([
-		{
+	let result = await inquirer.prompt([{
 			type: "password",
 			name: "secret",
 			message: "Enter secret",
-		    validate: bip39Validator,
+			validate: bip39Validator,
 			required: true
 		},
 		{
@@ -269,8 +267,8 @@ async function depositDapp() {
 			type: "input",
 			name: "secondSecret",
 			message: "Enter secondary secret (if defined)",
-			validate: function(message) {
-			    return message.length < 100;
+			validate: function (message) {
+				return message.length < 100;
 			},
 			required: false
 		}
@@ -288,15 +286,13 @@ async function depositDapp() {
 		body.secondSecret = result.secondSecret;
 	}
 
-	let hostResult = await inquirer.prompt([
-		{
-			type: "input",
-			name: "host",
-			message: "Host and port",
-			default: "localhost:4096",
-			required: true
-		}
-	]);
+	let hostResult = await inquirer.prompt([{
+		type: "input",
+		name: "host",
+		message: "Host and port",
+		default: "localhost:4096",
+		required: true
+	}]);
 
 	request({
 		url: "http://" + hostResult.host + "/api/dapps/transaction",
@@ -319,8 +315,7 @@ async function depositDapp() {
 }
 
 async function withdrawalDapp() {
-	let result = await inquirer.prompt([
-		{
+	let result = await inquirer.prompt([{
 			type: "password",
 			name: "secret",
 			message: "Enter secret",
@@ -345,34 +340,34 @@ async function withdrawalDapp() {
 				return isAddress.test(value);
 			},
 			required: true
-		}]);
+		}
+	]);
 
-		var body = {
-			secret: result.secret,
-			amount: Number(result.amount)
-		};
+	var body = {
+		secret: result.secret,
+		amount: Number(result.amount)
+	};
 
-		request({
-			url: "http://localhost:4096/api/dapps/" + result.dappId + "/api/withdrawal",
-			method: "post",
-			json: true,
-			body: body
-		}, function (err, resp, body) {
-			if (err) {
-				return console.log(err.toString());
-			}
+	request({
+		url: "http://localhost:4096/api/dapps/" + result.dappId + "/api/withdrawal",
+		method: "post",
+		json: true,
+		body: body
+	}, function (err, resp, body) {
+		if (err) {
+			return console.log(err.toString());
+		}
 
-			if (body.success) {
-				console.log(body.transactionId);
-			} else {
-				return console.log(body.error);
-			}
-		});
+		if (body.success) {
+			console.log(body.transactionId);
+		} else {
+			return console.log(body.error);
+		}
+	});
 }
 
 async function uninstallDapp() {
-	let result = await inquirer.prompt([
-		{
+	let result = await inquirer.prompt([{
 			type: "input",
 			name: "dappId",
 			message: "Enter dapp id",
@@ -393,34 +388,34 @@ async function uninstallDapp() {
 			name: "masterpassword",
 			message: "Enter dapp master password",
 			required: true
-		}]);
-		
-		var body = {
-			id: String(result.dappId),
-			master: String(result.masterpassword)
-		};
+		}
+	]);
 
-		request({
-			url: "http://" + result.host + "/api/dapps/uninstall",
-			method: "post",
-			json: true,
-			body: body
-		}, function (err, resp, body) {
-			if (err) {
-				return console.log(err.toString());
-			}
+	var body = {
+		id: String(result.dappId),
+		master: String(result.masterpassword)
+	};
 
-			if (body.success) {
-				console.log("Done!");
-			} else {
-				return console.log(body.error);
-			}
-		});
+	request({
+		url: "http://" + result.host + "/api/dapps/uninstall",
+		method: "post",
+		json: true,
+		body: body
+	}, function (err, resp, body) {
+		if (err) {
+			return console.log(err.toString());
+		}
+
+		if (body.success) {
+			console.log("Done!");
+		} else {
+			return console.log(body.error);
+		}
+	});
 }
 
 async function installDapp() {
-	let result = await inquirer.prompt([
-		{
+	let result = await inquirer.prompt([{
 			type: "input",
 			name: "dappId",
 			message: "Enter dapp id",
@@ -441,29 +436,30 @@ async function installDapp() {
 			name: "masterpassword",
 			message: "Enter dapp master password",
 			required: true
-		}]);
+		}
+	]);
 
-		var body = {
-			id: String(result.dappId),
-			master: String(result.masterpassword)
-		};
+	var body = {
+		id: String(result.dappId),
+		master: String(result.masterpassword)
+	};
 
-		request({
-			url: "http://" + result.host + "/api/dapps/install",
-			method: "post",
-			json: true,
-			body: body
-		}, function (err, resp, body) {
-			if (err) {
-				return console.log(err.toString());
-			}
+	request({
+		url: "http://" + result.host + "/api/dapps/install",
+		method: "post",
+		json: true,
+		body: body
+	}, function (err, resp, body) {
+		if (err) {
+			return console.log(err.toString());
+		}
 
-			if (body.success) {
-				console.log("Done!", body.path);
-			} else {
-				return console.log(body.error);
-			}
-		});
+		if (body.success) {
+			console.log("Done!", body.path);
+		} else {
+			return console.log(body.error);
+		}
+	});
 }
 
 async function createGenesisBlock() {
@@ -516,7 +512,7 @@ async function createGenesisBlock() {
 }
 
 module.exports = function (program) {
-  program
+	program
 		.command("dapps")
 		.description("manage your dapps")
 		.option("-a, --add", "add new dapp")
